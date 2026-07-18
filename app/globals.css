@@ -1,0 +1,218 @@
+@import "tailwindcss";
+
+:root {
+  /* Sea-inspired surface system (light) */
+  --bg-base: #f5f8f9;
+  --bg-glow: rgba(13, 148, 136, 0.1);
+  --bg-glow-2: rgba(56, 189, 248, 0.08);
+  --foreground: #0a1417;
+  --surface: #ffffff;
+  --surface-border: rgba(4, 30, 38, 0.07);
+  --shadow-card:
+    0 1px 2px rgba(4, 30, 38, 0.05), 0 10px 30px -18px rgba(4, 30, 38, 0.35);
+
+  /* Motion curves (Emil-strength) */
+  --ease-sea-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-sea-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-sea-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-base: #070c11;
+    --bg-glow: rgba(13, 148, 136, 0.16);
+    --bg-glow-2: rgba(56, 189, 248, 0.08);
+    --foreground: #e9edee;
+    --surface: rgba(255, 255, 255, 0.045);
+    --surface-border: rgba(255, 255, 255, 0.09);
+    --shadow-card:
+      0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 40px -22px rgba(0, 0, 0, 0.8);
+  }
+}
+
+body {
+  background-color: var(--bg-base);
+  background-image:
+    radial-gradient(115% 72% at 8% -12%, var(--bg-glow-2), transparent 52%),
+    radial-gradient(120% 78% at 92% -16%, var(--bg-glow), transparent 58%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Pretendard Variable",
+    Pretendard, "Apple SD Gothic Neo", Roboto, sans-serif;
+  letter-spacing: -0.011em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tighter tracking on large display type only */
+h1,
+h2 {
+  letter-spacing: -0.02em;
+}
+
+.sea-focus {
+  outline: none;
+}
+
+.sea-focus:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--bg-base),
+    0 0 0 4px rgb(13 148 136 / 0.6);
+}
+
+.sea-press {
+  transition:
+    transform 140ms var(--ease-sea-out),
+    box-shadow 200ms var(--ease-sea-out),
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
+}
+
+.sea-press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Panel/card entrance — staggerable via --enter-delay */
+.sea-panel-enter {
+  transition:
+    opacity 300ms var(--ease-sea-out) var(--enter-delay, 0ms),
+    transform 300ms var(--ease-sea-out) var(--enter-delay, 0ms),
+    filter 300ms var(--ease-sea-out) var(--enter-delay, 0ms);
+  will-change: opacity, transform;
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: blur(3px);
+  }
+}
+
+.sea-popover-enter {
+  transform-origin: top center;
+  transition:
+    opacity 180ms var(--ease-sea-out),
+    transform 180ms var(--ease-sea-out);
+  will-change: opacity, transform;
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+/* SVG stroke draw-in (tide curve, etc.). Uses pathLength="1". */
+.sea-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: sea-draw-in 1100ms var(--ease-sea-in-out) 120ms forwards;
+}
+
+@keyframes sea-draw-in {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Fade-rise for SVG/opacity-only reveals */
+.sea-fade-in {
+  opacity: 0;
+  animation: sea-fade-in 520ms var(--ease-sea-out) 620ms forwards;
+}
+
+@keyframes sea-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Left-to-right clip reveal (timeline strip) */
+.sea-wipe {
+  animation: sea-wipe 720ms var(--ease-sea-out) 180ms both;
+}
+
+@keyframes sea-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Soft breathing glow for the "now" marker */
+.sea-now-glow {
+  animation: sea-now-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes sea-now-glow {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sea-lift {
+    transition:
+      transform 220ms var(--ease-sea-out),
+      box-shadow 220ms var(--ease-sea-out);
+  }
+  .sea-lift:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 2px 4px rgba(4, 30, 38, 0.06), 0 18px 42px -20px rgba(4, 30, 38, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .sea-panel-enter,
+  .sea-popover-enter {
+    transform: none !important;
+    filter: none !important;
+    will-change: auto;
+  }
+
+  .sea-draw {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .sea-fade-in {
+    opacity: 1;
+    animation: none;
+  }
+
+  .sea-wipe {
+    clip-path: none;
+    animation: none;
+  }
+
+  .sea-now-glow {
+    animation: none;
+  }
+
+  .sea-lift:hover {
+    transform: none;
+  }
+
+  .sea-press:active:not(:disabled) {
+    transform: none;
+  }
+}
