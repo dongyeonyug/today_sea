@@ -1,0 +1,14 @@
+.env
+.env.local
+.env*.local
+.env.development
+.env.production
+
+.next
+node_modules
+.omc
+.claude
+.agents
+.vendor
+.DS_Store
+*.tsbuildinfo
