@@ -55,8 +55,29 @@
 - 배포 환경변수 확인 후 Vercel 배포
 
 ### 남은 데이터 TODO (급하지 않음)
-- [ ] 판정 임계값을 공식 안전기준으로 검증 (현재 `swim.ts`/`mudflat.ts` 초안)
-- [ ] 간조/만조 안전창 시간폭(현재 간조 ±3h, 복귀 60분 전) 해수부 갯벌 가이드로 검증
+
+임계값 검증 항목은 [docs/adr/](adr/)로 옮겼다. 무엇을 확인해야 하는지는 각 ADR의
+"검증 방법" 절에 체크리스트로 있고, 둘 다 아직 `Proposed` 상태다.
+
+- [ ] [ADR-0001](adr/0001-swim-wave-thresholds.md) — 파고 0.5/1.0m·수온 20°C를 해경·지자체 기준과 대조 → `Accepted`
+- [ ] [ADR-0002](adr/0002-mudflat-safety-window.md) — 간조 ±3h·복귀 60분을 해수부 갯벌 가이드와 대조 → `Accepted`
+
+### AI-readiness 정비 (2026-07-20 완료)
+
+감사(`docs/ai-readiness-score.json`)에서 F(Verification Gates) 0점·D(Dependency Mapping)
+6점이 나온 것을 처리했다.
+
+- **CI 신설** — [.github/workflows/ci.yml](../.github/workflows/ci.yml). push·PR마다 `lint`·`typecheck`·`verify:links`·`build`. 넷 다 시크릿 불필요.
+- **eslint 도입** — `npm run lint`가 `next lint`를 부르는데 eslint가 설치조차 안 돼 있어 실제로는 동작하지 않았다. `eslint` + `eslint-config-next` 설치, `eslint.config.mjs`(flat) 작성. 소스 32개 전부 통과(에러 0).
+- **`verify:links` 신설** — [scripts/verify-doc-links.ts](../scripts/verify-doc-links.ts). 문서의 로컬 링크 68개가 실제로 존재하는지 검사. 문서가 코드보다 먼저 낡는 것을 자동으로 잡는다.
+- **ADR 도입** — [docs/adr/](adr/). 임계값의 근거와 **미검증 항목**을 외부화.
+- **모듈별 문서** — [lib/CLAUDE.md](../lib/CLAUDE.md), [app/CLAUDE.md](../app/CLAUDE.md). `data/`·`scripts/`·`components/`는 파일 수가 적어 의도적으로 만들지 않았다(drift 위험).
+- **PR 템플릿** — [.github/PULL_REQUEST_TEMPLATE.md](../.github/PULL_REQUEST_TEMPLATE.md). 안전 불변조건 체크리스트 + 로컬 `verify:*` 결과 첨부 요구.
+- **mermaid 데이터 흐름도** — `CLAUDE.md`/`CLAUDE.ko.md`.
+- **Node 버전 핀** — `.nvmrc` (24), `package.json`의 `engines: node >=20.6`.
+- `verify:chat`에 빠져 있던 `--env-file=.env` 추가(형제 스크립트와 정합).
+
+미착수: G(`evals/` 골든 스냅샷). 해커톤 단계 후순위로 남겨 둔다.
 
 ---
 
@@ -65,15 +86,23 @@
 ```bash
 cd /Users/yugdong-yeon/Desktop/soloton2
 npm run dev                 # http://localhost:3000 (또는 -p 로 포트 지정)
+
+# 키 없이 도는 것 — CI가 push·PR마다 자동으로 검사한다
+npm run lint                # eslint
+npm run typecheck           # tsc --noEmit
+npm run verify:links        # 문서의 로컬 링크가 실제로 존재하는지
+npm run build               # 프로덕션 빌드
+
+# .env 필요 — 실 API 호출이라 CI에 없다. 로컬에서 돌리고 PR에 결과 첨부
 npm run verify:sources      # 8개 소스 실호출 검증
 npm run verify:verdict      # 화이트리스트 전체 판정 검증
 npm run verify:chat         # 챗봇 프롬프트 안전가드 검증
-npm run build               # 프로덕션 빌드
 ```
 - **환경변수**(`.env`, gitignore됨): `ANTHROPIC_API_KEY`, `DATA_GO_KR_SERVICE_KEY`, `KHOA_OPENAPI_KEY` 모두 SET.
   - ⚠️ 실제로 쓰는 지수 API 인증키는 **`DATA_GO_KR_SERVICE_KEY`** (KHOA 바다누리 키는 이 앱에선 미사용 — 아래 4번 참고).
 - TS 직접 실행은 `tsx` 로더 사용: `node --env-file=.env --import tsx <script>` (package.json 스크립트에 반영됨).
-- git 저장소 아님(필요 시 `git init`).
+- **Node 20.6+ 필요** (`node --env-file`·`--import` 사용). `.nvmrc`는 24로 핀.
+- git 저장소임 — `main` 브랜치. CI는 [.github/workflows/ci.yml](../.github/workflows/ci.yml).
 
 ---
 
