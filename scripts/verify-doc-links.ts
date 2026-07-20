@@ -5,10 +5,36 @@
  * 문서가 코드보다 먼저 낡는 것을 막는 자동 게이트. CLAUDE.md 계열이
  * 없는 파일을 가리키기 시작하면 에이전트가 조용히 헛짚는다.
  */
+import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, normalize, resolve } from "node:path";
+import { dirname, join, normalize, relative, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "..");
+
+/**
+ * gitignore 대상 경로 집합.
+ *
+ * 로컬에는 있지만 커밋되지 않은 파일(`.omc/specs/...` 등)을 문서가 가리키면
+ * 내 컴퓨터에서만 통과하고 CI와 다른 사람의 클론에서는 깨진다. 실제로
+ * docs/implementation-plan.md가 이 상태였고 CI에서야 발각됐다.
+ * 존재 여부만 보는 검사로는 이걸 로컬에서 잡을 수 없으므로 따로 확인한다.
+ */
+function ignoredPaths(candidates: string[]): Set<string> {
+  if (candidates.length === 0) return new Set();
+  try {
+    const out = execFileSync("git", ["check-ignore", "--stdin"], {
+      cwd: ROOT,
+      input: candidates.join("\n"),
+      encoding: "utf8",
+      // check-ignore는 매치가 없으면 exit 1 → 정상 상황이므로 에러로 보지 않는다.
+    });
+    return new Set(out.split("\n").filter(Boolean));
+  } catch (err) {
+    const e = err as { status?: number; stdout?: string };
+    if (e.status === 1) return new Set((e.stdout ?? "").split("\n").filter(Boolean));
+    return new Set(); // git이 없는 환경에서는 존재 검사만 하고 넘어간다.
+  }
+}
 
 /** 검사 대상: 루트 마크다운 + docs/ 이하 전체 마크다운. */
 function targetFiles(): string[] {
@@ -40,7 +66,9 @@ function isLocalPath(target: string): boolean {
   return true;
 }
 
-type Broken = { file: string; line: number; text: string; target: string };
+type Broken = { file: string; line: number; text: string; target: string; reason: string };
+/** 존재는 하는 링크. gitignore 여부는 나중에 일괄 확인한다. */
+type Resolved = { file: string; line: number; text: string; target: string; abs: string };
 
 /**
  * [text](target) 링크.
@@ -51,6 +79,8 @@ type Broken = { file: string; line: number; text: string; target: string };
 const LINK_RE = /\[(?:[^[\]]|\[[^[\]]*\])*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 
 let checked = 0;
+
+const resolved: Resolved[] = [];
 
 function checkFile(file: string): Broken[] {
   const broken: Broken[] = [];
@@ -79,9 +109,11 @@ function checkFile(file: string): Broken[] {
       const abs = normalize(join(base, decodeURIComponent(target)));
       // 디렉터리 링크(`lib/sources/`)도 유효로 인정한다.
       if (!existsSync(abs)) {
-        broken.push({ file, line: i + 1, text: m[0], target: raw });
+        broken.push({ file, line: i + 1, text: m[0], target: raw, reason: "찾을 수 없음" });
       } else if (target.endsWith("/") && !statSync(abs).isDirectory()) {
-        broken.push({ file, line: i + 1, text: m[0], target: raw });
+        broken.push({ file, line: i + 1, text: m[0], target: raw, reason: "디렉터리가 아님" });
+      } else {
+        resolved.push({ file, line: i + 1, text: m[0], target: raw, abs });
       }
     }
   });
@@ -93,11 +125,19 @@ const files = targetFiles();
 const broken = files.flatMap(checkFile);
 const rel = (p: string) => p.replace(`${ROOT}/`, "");
 
+// 로컬에만 존재하는(커밋되지 않는) 파일을 가리키는 링크도 깨진 것으로 취급한다.
+const ignored = ignoredPaths(resolved.map((r) => relative(ROOT, r.abs)));
+for (const r of resolved) {
+  if (ignored.has(relative(ROOT, r.abs))) {
+    broken.push({ ...r, reason: "gitignore 대상 — 리포에 없어 다른 클론에서는 깨짐" });
+  }
+}
+
 if (broken.length > 0) {
   console.error(`❌ 존재하지 않는 경로를 가리키는 링크 ${broken.length}건:\n`);
   for (const b of broken) {
     console.error(`  ${rel(b.file)}:${b.line}  ${b.text}`);
-    console.error(`    → ${b.target} 를 찾을 수 없음`);
+    console.error(`    → ${b.target} — ${b.reason}`);
   }
   console.error("\n파일을 옮겼다면 문서의 링크도 함께 고치세요.");
   process.exit(1);

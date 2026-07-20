@@ -1,7 +1,8 @@
 # 실구현 계획 — 오늘의 바다 (Today's Sea)
 
 > 목적: 해커톤 우승용이되 실제 출시 가능한 MVP 퀄리티.
-> 근거 문서: [스펙](../.omc/specs/deep-interview-oneul-ui-bada.md) · [검증된 API](./verified-apis.md) · [와이어프레임](https://claude.ai/code/artifact/17577632-457d-48ce-832b-f9a75786a447)
+> 근거 문서: [검증된 API](./verified-apis.md) · [와이어프레임](https://claude.ai/code/artifact/17577632-457d-48ce-832b-f9a75786a447)
+> (초기 스펙 `.omc/specs/deep-interview-oneul-ui-bada.md`는 gitignore 대상이라 리포에 없다 — 작성자 로컬에만 존재.)
 > 상태: M6.1 접근성/문서 정합성 보정 완료
 
 ---
