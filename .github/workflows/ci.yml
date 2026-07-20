@@ -1,0 +1,44 @@
+# 시크릿 없이 돌릴 수 있는 것만 게이트로 건다.
+#
+# verify:sources / verify:verdict / verify:chat 은 data.go.kr·Anthropic 실 API를
+# 호출하므로 여기 넣지 않는다. 포크 PR에는 시크릿이 전달되지 않고, 외부 API가
+# 잠깐 죽으면 코드와 무관하게 CI가 빨개져 게이트로서 신뢰를 잃는다.
+# 그 3종은 로컬에서 돌리고 PR 본문에 결과를 붙이는 방식으로 남긴다
+# (.github/PULL_REQUEST_TEMPLATE.md 체크리스트 참고).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: lint · typecheck · links · build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: 의존성 설치
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: 타입 검사
+        run: npm run typecheck
+
+      # 문서가 없는 파일을 가리키기 시작하면 에이전트가 조용히 헛짚는다.
+      - name: 문서 링크 검증
+        run: npm run verify:links
+
+      # .env 없이도 통과하는 것을 확인함 — API 라우트는 전부 동적이라
+      # 빌드 시점에 키를 읽지 않는다.
+      - name: 프로덕션 빌드
+        run: npm run build
