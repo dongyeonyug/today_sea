@@ -5,6 +5,8 @@
  *
  * ⚠️ 시간폭은 초안(§10): 간조 ±3시간을 도보 가능 창으로 보고,
  *    창 종료 60분 전부터 복귀 경고. 해수부 갯벌 가이드로 검증 필요.
+ *    값의 근거와 미검증 항목: docs/adr/0002-mudflat-safety-window.md
+ *    시간폭을 바꾸면 해당 ADR도 함께 갱신할 것.
  */
 import type { Signal, TidePoint, TimelineBand, Verdict } from "./types";
 import { combineStatus, nowSeoulISO } from "./types";
