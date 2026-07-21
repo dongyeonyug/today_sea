@@ -4,8 +4,9 @@
  * 신호: 조석(안전 창) · 기상특보 · 갯벌체험지수(지수값 API 미연동 시 데이터없음).
  *
  * ⚠️ 시간폭은 초안(§10): 간조 ±3시간을 도보 가능 창으로 보고,
- *    창 종료 60분 전부터 복귀 경고. 해수부 갯벌 가이드로 검증 필요.
- *    값의 근거와 미검증 항목: docs/adr/0002-mudflat-safety-window.md
+ *    창 종료 60분 전부터 복귀 경고. 2026-07-21 대조 결과 해수부 안내는 정성적이라
+ *    비출 공식 수치 시간창이 없어 여전히 미검증(진입 쪽 −3h가 특히 약함).
+ *    근거·조사 결과·남은 항목: docs/adr/0002-mudflat-safety-window.md (Proposed).
  *    시간폭을 바꾸면 해당 ADR도 함께 갱신할 것.
  */
 import type { Signal, TidePoint, TimelineBand, Verdict } from "./types";

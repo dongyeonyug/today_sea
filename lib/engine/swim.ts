@@ -1,9 +1,9 @@
 /**
  * 물놀이·수영 판정 규칙(§5).
  * 신호: 파고(open-meteo) · 수온(open-meteo) · 기상특보 · 이안류(미연동 시 데이터없음).
- * 임계값은 초안 — 공식 안전기준으로 검증 필요(§10).
- * 값의 근거와 미검증 항목: docs/adr/0001-swim-wave-thresholds.md
- * 임계값을 바꾸면 해당 ADR도 함께 갱신할 것.
+ * 파고 0.5/1.0m는 공식 표준 유래가 아니라 의도적 보수 선택(공식 풍랑주의보 3m보다
+ * 훨씬 엄격). 이안류 매핑은 공식 4단계 지수와 정렬됨 — 근거·대조 결과·한계는
+ * docs/adr/0001-swim-wave-thresholds.md (Accepted). 임계값을 바꾸면 ADR도 함께 갱신.
  */
 import type { Signal, Status, TimelineBand, Verdict } from "./types";
 import { RANKED, combineStatus, nowSeoulISO } from "./types";
